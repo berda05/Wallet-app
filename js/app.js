@@ -461,18 +461,66 @@
   function openModal(html) {
     const sheet = $("#modalSheet");
     sheet.innerHTML = html;
+    // dugme za zatvaranje (X)
+    const close = document.createElement("button");
+    close.className = "sheet-close";
+    close.setAttribute("aria-label", "Zatvori");
+    close.innerHTML = "&times;";
+    close.addEventListener("click", closeModal);
+    sheet.appendChild(close);
+    // reset eventualnih inline stilova od prethodnog prevlacenja
+    sheet.style.transition = "";
+    sheet.style.transform = "";
+    sheet.scrollTop = 0;
     $("#modalBackdrop").classList.remove("hidden");
     requestAnimationFrame(() => {
       $("#modalBackdrop").classList.add("show");
       sheet.classList.add("show");
     });
+    attachSheetDrag(sheet);
     return sheet;
   }
+
   function closeModal() {
     const sheet = $("#modalSheet");
+    sheet.style.transition = "";
+    sheet.style.transform = "";
     sheet.classList.remove("show");
     $("#modalBackdrop").classList.remove("show");
-    setTimeout(() => { $("#modalBackdrop").classList.add("hidden"); sheet.innerHTML = ""; }, 250);
+    setTimeout(() => { $("#modalBackdrop").classList.add("hidden"); sheet.innerHTML = ""; }, 280);
+  }
+
+  // Prevlacenje panela na dole za zatvaranje (samo sa gornje "ручке"/naslova)
+  function attachSheetDrag(sheet) {
+    let startY = 0, dy = 0, dragging = false;
+    function onStart(e) {
+      if (!e.target.closest(".sheet-handle, .sheet-title")) return;
+      startY = (e.touches ? e.touches[0].clientY : e.clientY);
+      dragging = true; dy = 0;
+      sheet.style.transition = "none";
+    }
+    function onMove(e) {
+      if (!dragging) return;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY);
+      dy = Math.max(0, y - startY);
+      if (dy > 0) {
+        if (e.cancelable) e.preventDefault();
+        sheet.style.transform = "translateY(" + dy + "px)";
+      }
+    }
+    function onEnd() {
+      if (!dragging) return;
+      dragging = false;
+      sheet.style.transition = "";
+      if (dy > 90) { closeModal(); }
+      else { sheet.style.transform = ""; }
+    }
+    sheet.addEventListener("touchstart", onStart, { passive: true });
+    sheet.addEventListener("touchmove", onMove, { passive: false });
+    sheet.addEventListener("touchend", onEnd);
+    sheet.addEventListener("mousedown", onStart);
+    sheet.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onEnd);
   }
 
   /* ---------- chooser when pressing + ---------- */
