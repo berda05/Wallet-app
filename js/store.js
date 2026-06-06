@@ -84,6 +84,9 @@
     return tx;
   }
   function deleteTx(id) {
+    // ako je ovo auto-transakcija nekog racuna, vrati racun na "neplaceno"
+    const linked = data.bills.find(b => b.paidTxId === id);
+    if (linked) { linked.paidTxId = null; linked.paidMonth = null; }
     data.transactions = data.transactions.filter(t => t.id !== id);
     save();
   }
@@ -97,12 +100,40 @@
     save();
     return b;
   }
-  function deleteBill(id) { data.bills = data.bills.filter(b => b.id !== id); save(); }
+  function deleteBill(id) {
+    const b = getBill(id);
+    // ukloni i automatsku transakciju ako je racun bio placen
+    if (b && b.paidTxId) data.transactions = data.transactions.filter(t => t.id !== b.paidTxId);
+    data.bills = data.bills.filter(x => x.id !== id);
+    save();
+  }
   function getBill(id) { return data.bills.find(b => b.id === id); }
   function toggleBillPaid(id) {
     const b = getBill(id);
     if (!b) return;
-    b.paidMonth = (b.paidMonth === nowYM()) ? null : nowYM();
+    const wasPaid = b.paidMonth === nowYM();
+    if (wasPaid) {
+      // ponisti placanje -> obrisi povezanu transakciju
+      b.paidMonth = null;
+      if (b.paidTxId) {
+        data.transactions = data.transactions.filter(t => t.id !== b.paidTxId);
+        b.paidTxId = null;
+      }
+    } else {
+      // oznaci placeno -> napravi trosak koji se vidi u transakcijama
+      b.paidMonth = nowYM();
+      const tx = {
+        id: uid(),
+        type: "expense",
+        amount: b.amount,
+        category: b.category,
+        note: b.name,
+        date: todayISO(),
+        billRef: b.id   // veza ka racunu (auto-transakcija)
+      };
+      data.transactions.push(tx);
+      b.paidTxId = tx.id;
+    }
     save();
   }
 

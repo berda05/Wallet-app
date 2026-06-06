@@ -170,6 +170,7 @@ input { font-family: inherit; }
 .badge.overdue { background: rgba(255,90,95,.15); color: var(--red); }
 .badge.soon { background: rgba(255,169,77,.18); color: #E8830C; }
 .badge.paid { background: rgba(47,191,113,.15); color: var(--green); }
+.badge.bill { background: rgba(108,92,231,.14); color: var(--accent); font-weight: 700; }
 .bill-row.is-paid { opacity: .55; }
 
 .mini-btn { font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 9px; }

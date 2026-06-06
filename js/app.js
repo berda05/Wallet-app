@@ -264,7 +264,7 @@
     row.innerHTML = `
       <span class="row-ico" style="background:${c.color}22;color:${c.color}">${c.icon}</span>
       <div class="row-mid">
-        <div class="row-title">${escapeHtml(t.note || catLabel(t.type, t.category))}</div>
+        <div class="row-title">${escapeHtml(t.note || catLabel(t.type, t.category))} ${t.billRef ? `<span class="badge bill">🧾 ${T("tab.bills")}</span>` : ""}</div>
         <div class="row-sub">${catLabel(t.type, t.category)} · ${fmtDate(t.date)}</div>
       </div>
       <div class="row-amt ${t.type}">${fmtMoney(t.type === "income" ? t.amount : -t.amount, { plus: true })}</div>`;
