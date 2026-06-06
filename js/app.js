@@ -39,6 +39,13 @@
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
   }
 
+  // Parsira iznos i sa zarezom i sa tackom (sr/en), ignorise razmake
+  function parseAmount(str) {
+    str = String(str == null ? "" : str).trim().replace(/\s/g, "").replace(",", ".");
+    const n = parseFloat(str);
+    return isNaN(n) ? NaN : n;
+  }
+
   /* ---------------- toast ---------------- */
   let toastTimer;
   function toast(msg) {
@@ -563,7 +570,7 @@
         <label class="field">
           <span class="field-lbl">${T("form.amount")}</span>
           <div class="amount-input">
-            <input id="txAmount" type="number" inputmode="decimal" step="0.01" min="0" required value="${tx ? tx.amount : ""}" placeholder="0" />
+            <input id="txAmount" type="text" inputmode="decimal" pattern="[0-9.,]*" required value="${tx ? tx.amount : ""}" placeholder="0" />
             <span class="cur-tag">${Store.settings.currency === "EUR" ? "€" : "RSD"}</span>
           </div>
         </label>
@@ -603,7 +610,7 @@
 
     sheet.querySelector("#txForm").addEventListener("submit", (e) => {
       e.preventDefault();
-      const amount = parseFloat(sheet.querySelector("#txAmount").value);
+      const amount = parseAmount(sheet.querySelector("#txAmount").value);
       if (!(amount > 0)) return;
       Store.addTx({
         id: tx ? tx.id : undefined,
@@ -636,7 +643,7 @@
         <label class="field"><span class="field-lbl">${T("form.billName")}</span>
           <input id="bName" type="text" required maxlength="40" value="${bill ? escapeHtml(bill.name) : ""}" placeholder="${T("form.billName")}" /></label>
         <label class="field"><span class="field-lbl">${T("form.amount")}</span>
-          <div class="amount-input"><input id="bAmount" type="number" inputmode="decimal" step="0.01" min="0" required value="${bill ? bill.amount : ""}" placeholder="0" />
+          <div class="amount-input"><input id="bAmount" type="text" inputmode="decimal" pattern="[0-9.,]*" required value="${bill ? bill.amount : ""}" placeholder="0" />
           <span class="cur-tag">${Store.settings.currency === "EUR" ? "€" : "RSD"}</span></div></label>
         <label class="field"><span class="field-lbl">${T("bills.dueDay")} (1–31)</span>
           <input id="bDay" type="number" min="1" max="31" required value="${bill ? bill.dueDay : 1}" /></label>
@@ -656,7 +663,7 @@
     bindCats();
     sheet.querySelector("#billForm").addEventListener("submit", (e) => {
       e.preventDefault();
-      const amount = parseFloat(sheet.querySelector("#bAmount").value);
+      const amount = parseAmount(sheet.querySelector("#bAmount").value);
       const day = Math.min(31, Math.max(1, parseInt(sheet.querySelector("#bDay").value, 10) || 1));
       if (!(amount > 0)) return;
       Store.addBill({
@@ -682,10 +689,10 @@
         <label class="field"><span class="field-lbl">${T("form.goalName")}</span>
           <input id="gName" type="text" required maxlength="40" value="${goal ? escapeHtml(goal.name) : ""}" placeholder="${T("form.goalName")}" /></label>
         <label class="field"><span class="field-lbl">${T("form.targetAmount")}</span>
-          <div class="amount-input"><input id="gTarget" type="number" inputmode="decimal" step="0.01" min="0" required value="${goal ? goal.target : ""}" placeholder="0" />
+          <div class="amount-input"><input id="gTarget" type="text" inputmode="decimal" pattern="[0-9.,]*" required value="${goal ? goal.target : ""}" placeholder="0" />
           <span class="cur-tag">${Store.settings.currency === "EUR" ? "€" : "RSD"}</span></div></label>
         <label class="field"><span class="field-lbl">${T("form.initialSaved")}</span>
-          <div class="amount-input"><input id="gSaved" type="number" inputmode="decimal" step="0.01" min="0" value="${goal ? (goal.saved || 0) : ""}" placeholder="0" />
+          <div class="amount-input"><input id="gSaved" type="text" inputmode="decimal" pattern="[0-9.,]*" value="${goal ? (goal.saved || 0) : ""}" placeholder="0" />
           <span class="cur-tag">${Store.settings.currency === "EUR" ? "€" : "RSD"}</span></div></label>
         <label class="field"><span class="field-lbl">${T("form.deadlineOpt")}</span>
           <input id="gDeadline" type="date" value="${goal && goal.deadline ? goal.deadline : ""}" /></label>
@@ -697,13 +704,13 @@
     const sheet = openModal(html);
     sheet.querySelector("#goalForm").addEventListener("submit", (e) => {
       e.preventDefault();
-      const target = parseFloat(sheet.querySelector("#gTarget").value);
+      const target = parseAmount(sheet.querySelector("#gTarget").value);
       if (!(target > 0)) return;
       Store.addGoal({
         id: goal ? goal.id : undefined,
         name: sheet.querySelector("#gName").value.trim(),
         target,
-        saved: parseFloat(sheet.querySelector("#gSaved").value) || 0,
+        saved: parseAmount(sheet.querySelector("#gSaved").value) || 0,
         deadline: sheet.querySelector("#gDeadline").value || ""
       });
       closeModal(); toast(T("toast.saved")); render();
@@ -719,14 +726,14 @@
       <div class="sheet-title">${T("goals.addFunds")} · ${escapeHtml(goal.name)}</div>
       <form id="fundForm">
         <label class="field"><span class="field-lbl">${T("form.fundsAmount")}</span>
-          <div class="amount-input"><input id="fAmount" type="number" inputmode="decimal" step="0.01" required autofocus placeholder="0" />
+          <div class="amount-input"><input id="fAmount" type="text" inputmode="decimal" pattern="[0-9.,]*" required autofocus placeholder="0" />
           <span class="cur-tag">${Store.settings.currency === "EUR" ? "€" : "RSD"}</span></div></label>
         <div class="form-actions"><button type="submit" class="btn-primary">${T("form.save")}</button></div>
       </form>`;
     const sheet = openModal(html);
     sheet.querySelector("#fundForm").addEventListener("submit", (e) => {
       e.preventDefault();
-      const amount = parseFloat(sheet.querySelector("#fAmount").value);
+      const amount = parseAmount(sheet.querySelector("#fAmount").value);
       if (!amount) return;
       Store.fundGoal(goal.id, amount);
       closeModal(); toast(T("toast.funded")); render();
@@ -756,7 +763,7 @@
         </div>
         <label class="set-row">
           <span>${T("set.rate")}</span>
-          <input id="setRate" type="number" step="0.01" min="0.01" value="${s.rate}" class="set-input" />
+          <input id="setRate" type="text" inputmode="decimal" pattern="[0-9.,]*" value="${s.rate}" class="set-input" />
         </label>
         <label class="set-row toggle-row">
           <span>${T("set.convert")}</span>
@@ -807,7 +814,7 @@
     }));
 
     sheet.querySelector("#setRate").addEventListener("change", (e) => {
-      const v = parseFloat(e.target.value); if (v > 0) { Store.settings.rate = v; Store.save(); }
+      const v = parseAmount(e.target.value); if (v > 0) { Store.settings.rate = v; Store.save(); }
     });
     sheet.querySelector("#setConvert").addEventListener("change", (e) => {
       Store.settings.convertOnSwitch = e.target.checked; Store.save();
